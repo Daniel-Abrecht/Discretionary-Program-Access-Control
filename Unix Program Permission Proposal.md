@@ -25,6 +25,17 @@ to access some of their files, the users could use that to open other users file
 It would be necessary to have a different user for each possible user program combination and often
 a lot of ACLs to model the permissions appropriately, which isn't really feasible for normal users.
 
+To give a practical example of the problem, consider the following scenario:
+```
+Alice and Eve don't trust each other and don't want the other one to access their files.
+Alice and Eve install VLC. They worry it may contain bugs that could compromise their user account if
+they open a bad video file. This is why they want to restrict VLC's access to only their "~/Video"
+subdirectory. They realize that they have a lot of other programs installed, and want to restrict
+the access of those too. And they sometimes use different locations for their files or have different
+opinions which programs should be able to access them. Alice has some videos in her "~/Photos" directory,
+but Eve doesn't, for example.
+```
+
 This is the problem the unix program permission proposal tries to address. The goal is to make it easy
 to restrict access of different programs and users simultaneously.
 
@@ -37,7 +48,7 @@ despite of their frequent abuse by freedesktop people in the past to dynamically
 graphics and sound cards, which is a horrible idea.
 
 Using a different user for each possible user program combination with sudo could be used to address
-this problem, but that would lead to a really big number of users, the user would still have to remember
+this problem, but that would lead to a really big number of users and the user would still have to remember
 to always switch to the correct user before using a program (setuid and setgid bits won't help here).
 On top of that, each of these user program combinations would need an entry in /etc/sudoers,
 and the user would often have to add a lot of ACLs to model the permissions correctly. All this would be a
