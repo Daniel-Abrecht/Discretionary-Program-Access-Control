@@ -41,7 +41,7 @@ this problem, but that would lead to a really big number of users, the user woul
 to always switch to the correct user before using a program (setuid and setgid bits won't help here).
 On top of that, each of these user program combinations would need an entry in /etc/sudoers,
 and the user would often have to add a lot of ACLs to model the permissions correctly. All this would be a
-lot of work for the users, it's difficult to get right, and it's error prone, and it's a nightmare to
+lot of work for the users, it's difficult to get right, it's error prone, and it's a nightmare to
 maintain.
 
 But how about using other existing solutions? In linux, we have SeLinux and Apparmor, why not use them?
