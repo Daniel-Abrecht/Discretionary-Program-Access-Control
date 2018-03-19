@@ -18,16 +18,31 @@ a users .bashrc and autostart directories, for example. It would be possible to 
 before starting the program, but we would have to remember to do so every time. And even if we could
 somehow automatically set the groups depending on which program is started, this would leave the
 problem that programs could abuse other programs that have permission to access a file they don't
-to gain access to it themselves. This is the problem the unix program permission proposal tries to address.
+to gain access to it themselves. The same problem would arise when using sudo to use a specific
+program with a specific user. Using a different user for a program to control it's permissions
+has yet another downside. If multiple users start such a program as the same user, and allow that user
+to access some of their files, the users could use that to open other users files with said program.
+It would be necessary to have a different user for each possible user program combination and often
+a lot of ACLs to model the permissions appropriately, which isn't really feasible for normal users.
 
+This is the problem the unix program permission proposal tries to address. The goal is to make it easy
+to restrict access of different programs and users simultaneously.
 
 ## Can this problem be solved with existing technologies?
 
-You may wonder, couldn't we solve this with ACLs? Sadly, we can't. They can be really useful if you
-need to grant access to a file to another user, but can't or don't want to create a group for everyone
-who is allowed to access it. I think they are a really good concept, despite of their frequent abuse
-by freedesktop people in the past to dynamically allow users access to graphics and sound cards,
-which is a horrible idea.
+You may wonder, couldn't we solve this with ACLs? Sadly, ACLs by themselves aren't enough for this.
+They can be really useful if you need to grant access to a file to another user, but can't or don't
+want to create a group for everyone who is allowed to access it. I think they are a really good concept,
+despite of their frequent abuse by freedesktop people in the past to dynamically allow users access to
+graphics and sound cards, which is a horrible idea.
+
+Using a different user for each possible user program combination with sudo could be used to address
+this problem, but that would lead to a really big number of users, the user would still have to remember
+to always switch to the correct user before using a program (setuid and setgid bits won't help here).
+On top of that, each of these user program combinations would need an entry in /etc/sudoers,
+and the user would often have to add a lot of ACLs to model the permissions correctly. All this would be a
+lot of work for the users, it's difficult to get right, and it's error prone, and it's a nightmare to
+maintain.
 
 But how about using other existing solutions? In linux, we have SeLinux and Apparmor, why not use them?
 SeLinux an Apparmor are great ways to increase the security servers and some desktop related things
