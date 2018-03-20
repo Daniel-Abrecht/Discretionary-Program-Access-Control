@@ -179,7 +179,7 @@ The pmode, pfmode, pdmode, puid and pgid options should only be accepted if the 
 
 When a program requests the puid, pgid and pmode of a file, but the system doesn't support it, the c library shuld just return 0 for puids and pgids, and 0777 for the pmode.
 
-Some programs may need to be extended to support unix permissions. For example, it would be nice if ls and stat could display them, and su could set the puid and pgid.
+Some programs may need to be extended to support UPP. For example, it would be nice if ls and stat could display them, and su could set the puid and pgid.
 Of course, in order to avoid any breakage on systems where UPP isn't used, let's just not display them on such systems if not explicitly requested.
 An easy way to only display them if necessary and actually used in case of a file or process would be to check if the puid and pgid are 0.
 An other possibility would be to just add an option, but it would be nice to have one that does the other possible solution too, since looking at a large list of things
