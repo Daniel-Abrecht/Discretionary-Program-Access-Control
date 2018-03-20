@@ -163,8 +163,7 @@ it may take a few years until noone uses it anymore.
 
 ### Further considerations
 
-I'm not sure how useful the euid, suid and ruid differentiation with puids (epuid, spuid, rpuid) would be, I would recommend to not introduce such different puids,
-since that may introduce unexpected problems.
+The euid, suid and ruid differentiation shouldn't be made with puids (epuid, spuid, rpuid), because that may introduce unexpected problems.
 
 A kernel should offer an option to enable or disable UPP.
 When UPP is enabled, a default pmode of 777 would make sense in that case, because it essentially disables the effects of UPP on such mountpoints.
@@ -186,4 +185,8 @@ An easy way to only display them if necessary and actually used in case of a fil
 An other possibility would be to just add an option, but it would be nice to have one that does the other possible solution too, since looking at a large list of things
 that have no effect can be annoying and wast a lot of time. 
 
-To manage pusers and pgroups, a libc with "Name Service Switch" support should add support for ppasswd and pgroup fields in /etc/nsswitch.conf
+Unlike with normal unix permissions, if starting an executable changes the pgid of the process, the pgroups must also be set. 
+Sadly, this leads to "Name Service Switch" (nss/nsswitch) not being usable to determine the appropriate pgroups in a secure
+and resonable way. I suggest providing an entry in /proc/, /sys/, or at a similar place that can be used by userspace to
+change the pgid to pgroups mapping. Changing that mapping this way should not change the pgroups of any already running
+process.
