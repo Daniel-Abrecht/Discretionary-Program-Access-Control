@@ -1,13 +1,33 @@
-# Unix Program Permission (UPP) Proposal
+# Discretionary Program Access Control (DPAC) Proposal
+
+Discretionary Program Access Control (DPAC) is intended as an extension of
+the Discretionary Access Control (DAC) system which is used by many Unix systems.
+There are already variouse approces to restrict access of applications, those
+are usually Mandatory Access Control (MAC) solutions, they are often difficult
+to use, require a lot of global configuration, and aim to restrict access of all
+resources and users, even of root. To me, DAC was a good solution for almost all
+problems I've ever had. It works perfectly to restrict access of daemons to files,
+it also works perfectly to restrict access of users to files, and it is easy to
+understand and use. The only problem is, if a user starts a program, he can only
+start it with his own user or with a user for the program, but not both. DAC
+fails to secure files for specific user program combinations. The idea of DPAC is
+to reuse as many concepts of DAC to solve this problem as possible, and to keep
+everything as simple as possible, essentially putting another DAC layer on top of
+DAC. A few slight changes are necessary for usability reasons though, like
+automatically switching users and groups when necessary. So let's keep DAC for
+handling user permissions, and focus on program permissions with DPAC. It's
+not quiet DAC DAC, but I think that would be overkill and fail to make these
+things simpler. Stacking real DAC layers would have been nice for user containers
+though, but I guess they're fine with subuids for now.
+
 
 ## Problem statement
 
-The unix permission system is very versatile. It allows to model almost any access restriction with a charming simplicity.
-There are two common ways they are used:
+The unix permission system is very versatile. It allows to model almost any access
+restriction with a charming simplicity. There are two common ways they are used:
 
  1) To model the permissions of an actual user
  2) To restrict a daemons access to the files it needs
-
 
 Unix permissions therefore simultaneously aim to control access of users and programs.
 Both concepts work perfectly on their own, but if you need both at the same time there is a problem.
@@ -36,7 +56,7 @@ opinions which programs should be able to access them. Alice has some videos in 
 but Eve doesn't, for example.
 ```
 
-This is the problem the unix program permission proposal tries to address. The goal is to make it easy
+This is the problem the discretionary program access control proposal tries to address. The goal is to make it easy
 to restrict access of different programs and users simultaneously.
 
 ## Can this problem be solved with existing technologies?
@@ -69,7 +89,7 @@ I believe this problem needs a solution that every user can easily understand an
 currently there just doesn't quiet cut it.
 
 
-## Proposed solution, Unix Program Permissions
+## Proposed solution, Discretionary Program Access Control
 
 In a nutshell, I propose to add a program user id (PUID) and program group id (PGID) in addition to the
 already existing existing user and group ids. In addition to that, we need seperate users and groups
@@ -80,9 +100,9 @@ will need an additional mode, uid and gid field for program users and groups.
 
 ### Determining if a user is allowed to open a file
 
-UPP only ever restricts access further when activated, it never grants new permissions.
+DPAC only ever restricts access further when activated, it never grants new permissions.
 When opening a file, the permissions to do so should be determined as follows.
-Calculate the read, write, etc. permissions the same way as without UPP, let's
+Calculate the read, write, etc. permissions the same way as without DPAC, let's
 call them the user permissions. Next, we determine the program permissions.
 The program permissions can be calculated basically the same way as the user
 permissions, we just use the PUIDs instead of the UIDs, the files pmode instead
@@ -91,7 +111,7 @@ program permissions to it (this includes the execute permission). The last step
 is to combine the user permission and the program permission and calculate the
 effective permissions. The effective permissions are all permissions the user
 permissions and program permissions share. Except if our uid is 0, in which
-case UPP can be ignored. It doesn't make sense to put fences around root.
+case DPAC can be ignored. It doesn't make sense to put fences around root.
 
 
 Example:
@@ -111,10 +131,10 @@ The effective permissions are therefore rx, because these are the only permissio
 
 There are a few interesting properties of this approach. If our PUID and GUID
 is zero and the PUID and the GUID of a file is zero too, it's as if the PUIDs
-GUIDs never existed. This means enabling UPP on a root file system and initialising every
+GUIDs never existed. This means enabling DPAC on a root file system and initialising every
 files' puid, pgid and pmode with 0 won't change any permissions at all. The same thing
 applies if the other component of every files pmode is 7, which essentially
-allows to turn UPP on or off for file systems that don't support it by setting
+allows to turn DPAC on or off for file systems that don't support it by setting
 a pumask when mounting them.
 
 ### Automatically applying the user and the setpuid bit in the files pmode
@@ -165,22 +185,22 @@ it may take a few years until noone uses it anymore.
 
 The euid, suid and ruid differentiation shouldn't be made with puids (epuid, spuid, rpuid), because that may introduce unexpected problems.
 
-A kernel should offer an option to enable or disable UPP.
-When UPP is enabled, a default pmode of 777 would make sense in that case, because it essentially disables the effects of UPP on such mountpoints.
+A kernel should offer an option to enable or disable DPAC.
+When DPAC is enabled, a default pmode of 777 would make sense in that case, because it essentially disables the effects of DPAC on such mountpoints.
 But a default pmode of 770 is just as desirable, because it prevents programs from being able to accessing files while not preventing the user from accessing them.
-Since there are multiple as reasonable options, the default pmode of mount points on which UPP wasn't enabled and where no other pmode was specified should be customizeable, including setpuid and setpgid bits.
+Since there are multiple as reasonable options, the default pmode of mount points on which DPAC wasn't enabled and where no other pmode was specified should be customizeable, including setpuid and setpgid bits.
 A costumizable kernel option to change the default puid and pgid of such mountpoints would also be nice, because it would allow to automatically restrict access of
 programs started from removable media.
 
-I would like to standardize some mount options right away. If a file system supports UPP, it should be possible to enable it with the option "upp" and to disable it with "noupp".
-On a mountpoint where UPP isn't enabled, there should be the options pfmode, pdmode, and pmode available to set the pmode of files, directories, both or special files respectively, including setpuid and setpgid bits.
+I would like to standardize some mount options right away. If a file system supports DPAC, it should be possible to enable it with the option "upp" and to disable it with "noupp".
+On a mountpoint where DPAC isn't enabled, there should be the options pfmode, pdmode, and pmode available to set the pmode of files, directories, both or special files respectively, including setpuid and setpgid bits.
 There should also be a pgid and puid option in that case to set the default pgid and puid.
 The pmode, pfmode, pdmode, puid and pgid options should only be accepted if the noupp option was explicitly specified.
 
 When a program requests the puid, pgid and pmode of a file, but the system doesn't support it, the c library shuld just return 0 for puids and pgids, and 0777 for the pmode.
 
-Some programs may need to be extended to support UPP. For example, it would be nice if ls and stat could display them, and su could set the puid and pgid.
-Of course, in order to avoid any breakage on systems where UPP isn't used, let's just not display them on such systems if not explicitly requested.
+Some programs may need to be extended to support DPAC. For example, it would be nice if ls and stat could display them, and su could set the puid and pgid.
+Of course, in order to avoid any breakage on systems where DPAC isn't used, let's just not display them on such systems if not explicitly requested.
 An easy way to only display them if necessary and actually used in case of a file or process would be to check if the puid and pgid are 0.
 An other possibility would be to just add an option, but it would be nice to have one that does the other possible solution too, since looking at a large list of things
 that have no effect can be annoying and wast a lot of time. 
